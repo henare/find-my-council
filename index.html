@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Find My Council</title>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+</head>
+<body>
+  <section id="wrapper">
+    <header>
+      <h1>Find My Council</h1>
+    </header>
+
+    <article>
+      <p>Finding your location: <span id="status">Checking...</span></p>
+    </article>
+  </section>
+
+  <script>
+    function success(position) {
+      var s = document.querySelector('#status');
+
+      if (s.className == 'success') {
+        // not sure why we're hitting this twice in FF, I think it's to do with a cached result coming back
+        return;
+      }
+
+      s.innerHTML = "Found you, now checking your council...";
+      s.className = 'success';
+
+      var api_url = 'http://tweetmycouncil.herokuapp.com/api/authority.json?callback=?&location=' +
+                    position.coords.longitude +
+                    "," +
+                    position.coords.latitude;
+
+      $.getJSON(api_url, function(data) {
+        var authority = data['authority'];
+
+        $('<ul/>', {
+          'class': 'council',
+          html:
+            '<li>Name: ' + authority['name'] + '</li>' +
+            '<li>Email: ' + authority['contact_email'] + '</li>' +
+            '<li>Twitter: ' + authority['twitter_screen_name'] + '</li>' +
+            '<li>Website: ' + authority['website_url'] + '</li>'
+        }).appendTo('#wrapper article');
+      });
+    }
+
+    function error(msg) {
+      var s = document.querySelector('#status');
+      s.innerHTML = typeof msg == 'string' ? msg : "failed";
+      s.className = 'fail';
+
+      //console.log(arguments);
+    }
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(success, error);
+    } else {
+      error('not supported');
+    }
+  </script>
+</body>
+</html>
